@@ -116,6 +116,7 @@ func main() {
 		case "add_watch":
 			err := watcher.Add(arg)
 			if err != nil {
+				// TODO: Send errors to Elixir.
 				panic(err)
 			}
 		default:

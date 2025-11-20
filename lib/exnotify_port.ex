@@ -44,10 +44,17 @@ defmodule ExnotifyPort do
   end
 
   defp data_to_message(%{"Name" => name, "Op" => op}) do
-    {:inotify_event, name, op}
+    {:inotify_event, name, op_symbols(op)}
   end
 
   defp data_to_message(%{"Err" => err}) do
     {:inotify_error, err}
+  end
+
+  defp op_symbols(op) do
+    <<chmod::1, rename::1, remove::1, write::1, create::1>> = <<op::5>>
+    flags = [chmod: chmod, rename: rename, remove: remove, write: write, create: create]
+
+    for {n, 1} <- flags, into: MapSet.new(), do: n
   end
 end
