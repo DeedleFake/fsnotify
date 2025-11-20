@@ -1,8 +1,8 @@
 defmodule FSNotify do
   @moduledoc """
-  This module provides a GenServer that can watch for filesystem
-  events and send messages to another process when they are received.
-  For information about messages that it sends, see `t:message/0`.
+  A GenServer that can watch for filesystem events and send messages
+  to another process when they are received. For information about
+  messages that it sends, see `t:message/0`.
   """
 
   @type t() :: GenServer.name()

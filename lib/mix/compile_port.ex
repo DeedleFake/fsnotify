@@ -1,4 +1,6 @@
 defmodule Mix.Tasks.Compile.CompilePort do
+  @moduledoc false
+
   use Mix.Task.Compiler
 
   @go_path System.find_executable("go")
