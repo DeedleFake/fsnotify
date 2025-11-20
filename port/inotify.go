@@ -48,15 +48,18 @@ func sendMessage(id uint64, msg any) {
 	sendData(id, data)
 }
 
+func sendOK(id uint64, val any) {
+	type okData struct {
+		OK any
+	}
+	sendMessage(id, okData{OK: val})
+}
+
 func sendError(id uint64, err error) {
 	type errorData struct {
 		Err string
 	}
-	data, err := json.Marshal(errorData{Err: err.Error()})
-	if err != nil {
-		panic(err)
-	}
-	sendData(id, data)
+	sendMessage(id, errorData{Err: err.Error()})
 }
 
 func commands() iter.Seq[string] {
@@ -138,6 +141,10 @@ func main() {
 				continue
 			}
 			sendData(id, ok)
+
+		case "watch_list":
+			list := watcher.WatchList()
+			sendMessage(id, list)
 
 		default:
 			panic(fmt.Errorf("unknown command: %q", cmd))

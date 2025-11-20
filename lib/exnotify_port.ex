@@ -15,6 +15,10 @@ defmodule ExnotifyPort do
     GenServer.call(server, {:remove, path})
   end
 
+  def watch_list(server) do
+    GenServer.call(server, :watch_list)
+  end
+
   @impl true
   def init(opts) do
     opts = Keyword.validate!(opts, [:receiver])
@@ -48,6 +52,12 @@ defmodule ExnotifyPort do
   end
 
   @impl true
+  def handle_call(:watch_list, _from, state) do
+    reply = send_command(state.port, "watch_list")
+    {:reply, reply, state}
+  end
+
+  @impl true
   def handle_info({_port, {:data, <<0::8*8, data::binary>>}}, state) do
     send(state.receiver, data_to_message(JSON.decode!(data)))
     {:noreply, state}
@@ -66,7 +76,9 @@ defmodule ExnotifyPort do
   end
 
   defp data_to_reply("ok"), do: :ok
+  defp data_to_reply(%{"OK" => val}), do: {:ok, val}
   defp data_to_reply(%{"Err" => err}), do: {:error, err}
+  defp data_to_reply(data), do: data
 
   defp data_to_message(%{"Name" => name, "Op" => op}), do: {:inotify_event, name, op_to_set(op)}
   defp data_to_message(%{"Err" => err}), do: {:inotify_error, err}
