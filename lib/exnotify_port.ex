@@ -11,6 +11,10 @@ defmodule ExnotifyPort do
     GenServer.call(server, {:add_watch, path})
   end
 
+  def remove(server, path) do
+    GenServer.call(server, {:remove, path})
+  end
+
   @impl true
   def init(opts) do
     opts = Keyword.validate!(opts, [:receiver])
@@ -34,6 +38,12 @@ defmodule ExnotifyPort do
   @impl true
   def handle_call({:add_watch, path}, _from, state) do
     Port.command(state.port, "add_watch #{path}")
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:remove, path}, _from, state) do
+    Port.command(state.port, "remove #{path}")
     {:reply, :ok, state}
   end
 

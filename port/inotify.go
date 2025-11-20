@@ -16,7 +16,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-func data[T string | []byte](buf T) {
+func sendData[T string | []byte](buf T) {
 	err := binary.Write(os.Stdout, binary.BigEndian, uint16(len(buf)))
 	if err != nil {
 		panic(err)
@@ -31,6 +31,25 @@ func data[T string | []byte](buf T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func sendEvent(ev fsnotify.Event) {
+	data, err := json.Marshal(ev)
+	if err != nil {
+		panic(err)
+	}
+	sendData(data)
+}
+
+func sendError(err error) {
+	type errorData struct {
+		Err string
+	}
+	data, err := json.Marshal(errorData{Err: err.Error()})
+	if err != nil {
+		panic(err)
+	}
+	sendData(data)
 }
 
 func commands() iter.Seq[string] {
@@ -57,10 +76,6 @@ func commands() iter.Seq[string] {
 }
 
 func watch(ctx context.Context, watcher *fsnotify.Watcher) {
-	type errorData struct {
-		Err string
-	}
-
 	var buf bytes.Buffer
 
 	for {
@@ -72,27 +87,13 @@ func watch(ctx context.Context, watcher *fsnotify.Watcher) {
 			if !ok {
 				return
 			}
-
-			err := json.MarshalWrite(&buf, event)
-			if err != nil {
-				panic(err)
-			}
-
-			data(buf.Bytes())
+			sendEvent(event)
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return
 			}
-
-			err = json.MarshalWrite(&buf, errorData{
-				Err: err.Error(),
-			})
-			if err != nil {
-				panic(err)
-			}
-
-			data(buf.Bytes())
+			sendError(err)
 		}
 
 		buf.Reset()
@@ -119,6 +120,13 @@ func main() {
 				// TODO: Send errors to Elixir.
 				panic(err)
 			}
+
+		case "remove":
+			err := watcher.Remove(arg)
+			if err != nil {
+				panic(err)
+			}
+
 		default:
 			panic(fmt.Errorf("unknown command: %q", cmd))
 		}
