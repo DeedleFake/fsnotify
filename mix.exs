@@ -1,6 +1,8 @@
 defmodule FSNotify.MixProject do
   use Mix.Project
 
+  @github "https://github.com/DeedleFake/fsnotify"
+
   def project do
     [
       app: :fsnotify,
@@ -10,7 +12,7 @@ defmodule FSNotify.MixProject do
       deps: deps(),
       compilers: Mix.compilers() ++ [:compile_port],
       name: "FSNotify",
-      source_url: "https://github.com/DeedleFake/fsnotify",
+      source_url: @github,
       dialyzer: dialyzer(),
       description: description(),
       package: package()
@@ -38,7 +40,9 @@ defmodule FSNotify.MixProject do
 
   defp package do
     [
-      licenses: ["MIT"]
+      links: %{"GitHub" => @github},
+      licenses: ["MIT"],
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE go.* port),
     ]
   end
 
