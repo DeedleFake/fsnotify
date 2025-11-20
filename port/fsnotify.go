@@ -68,12 +68,18 @@ func commands() iter.Seq[string] {
 			var size uint16
 			err := binary.Read(os.Stdin, binary.BigEndian, &size)
 			if err != nil {
+				if err == io.EOF {
+					return
+				}
 				panic(err)
 			}
 
 			buf := make([]byte, size)
 			_, err = io.ReadFull(os.Stdin, buf)
 			if err != nil {
+				if err == io.EOF {
+					return
+				}
 				panic(err)
 			}
 

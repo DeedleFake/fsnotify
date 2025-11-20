@@ -19,6 +19,10 @@ defmodule FSNotify do
     GenServer.call(server, :watch_list)
   end
 
+  def stop(server) do
+    GenServer.cast(server, :stop)
+  end
+
   @impl true
   def init(opts) do
     opts = Keyword.validate!(opts, [:receiver])
@@ -55,6 +59,12 @@ defmodule FSNotify do
   def handle_call(:watch_list, _from, state) do
     reply = send_command(state.port, "watch_list")
     {:reply, reply, state}
+  end
+
+  @impl true
+  def handle_cast(:stop, state) do
+    Port.close(state.port)
+    {:stop, {:shutdown, :stopped}, state}
   end
 
   @impl true
