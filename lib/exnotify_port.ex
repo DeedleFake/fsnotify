@@ -68,10 +68,10 @@ defmodule ExnotifyPort do
   defp data_to_reply("ok"), do: :ok
   defp data_to_reply(%{"Err" => err}), do: {:error, err}
 
-  defp data_to_message(%{"Name" => name, "Op" => op}), do: {:inotify_event, name, op_symbols(op)}
+  defp data_to_message(%{"Name" => name, "Op" => op}), do: {:inotify_event, name, op_to_set(op)}
   defp data_to_message(%{"Err" => err}), do: {:inotify_error, err}
 
-  defp op_symbols(op) do
+  defp op_to_set(op) do
     <<chmod::1, rename::1, remove::1, write::1, create::1>> = <<op::5>>
     flags = [chmod: chmod, rename: rename, remove: remove, write: write, create: create]
 
