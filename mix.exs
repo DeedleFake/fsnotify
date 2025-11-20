@@ -11,7 +11,9 @@ defmodule FSNotify.MixProject do
       compilers: Mix.compilers() ++ [:compile_port],
       name: "FSNotify",
       source_url: "https://github.com/DeedleFake/fsnotify",
-      dialyzer: dialyzer()
+      dialyzer: dialyzer(),
+      description: description(),
+      package: package()
     ]
   end
 
@@ -25,6 +27,18 @@ defmodule FSNotify.MixProject do
   defp dialyzer do
     [
       plt_add_apps: [:mix]
+    ]
+  end
+
+  defp description do
+    """
+    Provides cross-platform filesystem event monitoring in the vein of inotify.
+    """
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"]
     ]
   end
 
