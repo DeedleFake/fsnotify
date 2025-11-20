@@ -1,26 +1,73 @@
 defmodule FSNotify do
+  @moduledoc """
+  This module provides a GenServer that can watch for filesystem
+  events and send messages to another process when they are received.
+  For information about messages that it sends, see `t:message/0`.
+  """
+
+  @type t() :: GenServer.name()
+
+  @type message() ::
+          {:fsnotify_event, path :: String.t(), ops :: MapSet.t(op())}
+          | {:fsnotify_error, error_message :: String.t()}
+  @type op() :: :create | :write | :remove | :rename | :chmod
+
+  @type start_option() :: {:name, t()} | {:receiver, Process.dest()}
+
   use GenServer
 
+  @doc """
+  Starts a new monitor. A single monitor can watch for events in
+  multiple files and directories, so one is generally enough for a lot
+  of use cases.
+
+  ## Options
+
+    * `:name` - the name to register the GenServer under
+
+    * `:receiver` - the process to send events and errors to (defaults
+      to the calling process; should be present if running under a
+      supervisor)
+  """
+  @spec start_link([start_option()]) :: GenServer.on_start()
   def start_link(opts) do
     {name, opts} = Keyword.pop(opts, :name)
     opts = Keyword.put_new(opts, :receiver, self())
     GenServer.start_link(__MODULE__, opts, name: name)
   end
 
-  def add_watch(server, path) do
-    GenServer.call(server, {:add_watch, path})
+  @doc """
+  Registers a path to be watched by the monitor.
+  """
+  @spec add_watch(t(), Path.t()) :: :ok | {:error, String.t()}
+  def add_watch(fsnotify, path) do
+    GenServer.call(fsnotify, {:add_watch, path})
   end
 
-  def remove(server, path) do
-    GenServer.call(server, {:remove, path})
+  @doc """
+  Removes a path that was previously registered to be watched by the
+  monitor.
+  """
+  @spec remove(t(), Path.t()) :: :ok | {:error, String.t()}
+  def remove(fsnotify, path) do
+    GenServer.call(fsnotify, {:remove, path})
   end
 
-  def watch_list(server) do
-    GenServer.call(server, :watch_list)
+  @doc """
+  Returns, in no particular order, all paths registered to be watched
+  by the monitor.
+  """
+  @spec watch_list(t()) :: [path] when path: String.t()
+  def watch_list(fsnotify) do
+    GenServer.call(fsnotify, :watch_list)
   end
 
-  def stop(server) do
-    GenServer.cast(server, :stop)
+  @doc """
+  Stops the monitor, causing the process to shutdown cleanly.
+  """
+  @spec stop(t()) :: :ok
+  def stop(fsnotify) do
+    GenServer.cast(fsnotify, :stop)
   end
 
   @impl true
@@ -90,8 +137,8 @@ defmodule FSNotify do
   defp data_to_reply(%{"Err" => err}), do: {:error, err}
   defp data_to_reply(data), do: data
 
-  defp data_to_message(%{"Name" => name, "Op" => op}), do: {:inotify_event, name, op_to_set(op)}
-  defp data_to_message(%{"Err" => err}), do: {:inotify_error, err}
+  defp data_to_message(%{"Name" => name, "Op" => op}), do: {:fsnotify_event, name, op_to_set(op)}
+  defp data_to_message(%{"Err" => err}), do: {:fsnotify_error, err}
 
   defp op_to_set(op) do
     <<chmod::1, rename::1, remove::1, write::1, create::1>> = <<op::5>>

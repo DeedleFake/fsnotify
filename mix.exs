@@ -8,7 +8,9 @@ defmodule FSNotify.MixProject do
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      compilers: Mix.compilers() ++ [:compile_port]
+      compilers: Mix.compilers() ++ [:compile_port],
+      name: "FSNotify",
+      source_url: "https://github.com/DeedleFake/fsnotify"
     ]
   end
 
@@ -21,6 +23,8 @@ defmodule FSNotify.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    []
+    [
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true}
+    ]
   end
 end
