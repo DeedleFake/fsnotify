@@ -12,7 +12,7 @@ defmodule FSNotify do
           | {:fsnotify_error, error_message :: String.t()}
   @type op() :: :create | :write | :remove | :rename | :chmod
 
-  @type start_option() :: {:name, t()} | {:receiver, Process.dest()}
+  @type start_option() :: {:name, t()} | {:receiver, Process.dest()} | {:watches, [Path.t()]}
 
   use GenServer
 
@@ -28,6 +28,9 @@ defmodule FSNotify do
     * `:receiver` - the process to send events and errors to (defaults
       to the calling process; should be present if running under a
       supervisor)
+
+    * `:watches` - an initial set of watches to add; failure to add
+      any of them is considered fatal
   """
   @spec start_link([start_option()]) :: GenServer.on_start()
   def start_link(opts) do
@@ -72,7 +75,7 @@ defmodule FSNotify do
 
   @impl true
   def init(opts) do
-    opts = Keyword.validate!(opts, [:receiver])
+    opts = Keyword.validate!(opts, [:receiver, :watches])
 
     executable = Path.join(:code.priv_dir(:fsnotify), "fsnotify")
 
@@ -87,24 +90,37 @@ defmodule FSNotify do
      %{
        receiver: Keyword.fetch!(opts, :receiver),
        port: port
-     }}
+     }, {:continue, {:add_initial_watches, opts[:watches]}}}
+  end
+
+  @impl true
+  def handle_continue({:add_initial_watches, nil}, state) do
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_continue({:add_initial_watches, watches}, state) when is_list(watches) do
+    for watch <- watches do
+      :ok = send_command(state.port, :add_watch, watch)
+    end
+    {:noreply, state}
   end
 
   @impl true
   def handle_call({:add_watch, path}, _from, state) do
-    reply = send_command(state.port, "add_watch #{path}")
+    reply = send_command(state.port, :add_watch, path)
     {:reply, reply, state}
   end
 
   @impl true
   def handle_call({:remove, path}, _from, state) do
-    reply = send_command(state.port, "remove #{path}")
+    reply = send_command(state.port, :remove, path)
     {:reply, reply, state}
   end
 
   @impl true
   def handle_call(:watch_list, _from, state) do
-    reply = send_command(state.port, "watch_list")
+    reply = send_command(state.port, :watch_list)
     {:reply, reply, state}
   end
 
@@ -120,9 +136,9 @@ defmodule FSNotify do
     {:noreply, state}
   end
 
-  defp send_command(port, command) do
+  defp send_command(port, command, arg \\ nil) do
     id = :erlang.unique_integer([:positive])
-    Port.command(port, <<id::8*8-big, command::binary>>)
+    Port.command(port, <<id::8*8-big, "#{command} #{arg}">>)
 
     receive do
       {^port, {:data, <<^id::8*8-big, data::binary>>}} ->
