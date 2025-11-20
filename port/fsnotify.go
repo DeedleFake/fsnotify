@@ -48,13 +48,6 @@ func sendMessage(id uint64, msg any) {
 	sendData(id, data)
 }
 
-func sendOK(id uint64, val any) {
-	type okData struct {
-		OK any
-	}
-	sendMessage(id, okData{OK: val})
-}
-
 func sendError(id uint64, err error) {
 	type errorData struct {
 		Err string
@@ -62,8 +55,8 @@ func sendError(id uint64, err error) {
 	sendMessage(id, errorData{Err: err.Error()})
 }
 
-func commands() iter.Seq[string] {
-	return func(yield func(string) bool) {
+func commands() iter.Seq2[uint64, string] {
+	return func(yield func(uint64, string) bool) {
 		for {
 			var size uint16
 			err := binary.Read(os.Stdin, binary.BigEndian, &size)
@@ -83,8 +76,11 @@ func commands() iter.Seq[string] {
 				panic(err)
 			}
 
+			id := binary.BigEndian.Uint64(buf)
+			buf = buf[8:]
+
 			str := unsafe.String(unsafe.SliceData(buf), len(buf))
-			if !yield(str) {
+			if !yield(id, str) {
 				return
 			}
 		}
@@ -127,10 +123,8 @@ func main() {
 	defer watcher.Close()
 	go watch(ctx, watcher)
 
-	for cmd := range commands() {
-		id := binary.BigEndian.Uint64(unsafe.Slice(unsafe.StringData(cmd), len(cmd)))
-
-		cmd, arg, _ := strings.Cut(cmd[8:], " ")
+	for id, cmd := range commands() {
+		cmd, arg, _ := strings.Cut(cmd, " ")
 		switch cmd {
 		case "add_watch":
 			err := watcher.Add(arg)
