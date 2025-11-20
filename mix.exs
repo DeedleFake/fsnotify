@@ -10,7 +10,8 @@ defmodule FSNotify.MixProject do
       deps: deps(),
       compilers: Mix.compilers() ++ [:compile_port],
       name: "FSNotify",
-      source_url: "https://github.com/DeedleFake/fsnotify"
+      source_url: "https://github.com/DeedleFake/fsnotify",
+      dialyzer: dialyzer()
     ]
   end
 
@@ -18,6 +19,12 @@ defmodule FSNotify.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_add_apps: [:mix]
     ]
   end
 
