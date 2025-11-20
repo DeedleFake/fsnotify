@@ -1,21 +1,4 @@
-# ExnotifyPort
+fsnotify
+========
 
-**TODO: Add description**
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `exnotify_port` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:exnotify_port, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/exnotify_port>.
-
+fsnotify provides an Elixir interface to various OS filesystem event watching systems. It has no Elixir dependencies but does require the Go toolchain for compilation of a port that is used internally.

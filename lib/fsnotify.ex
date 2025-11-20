@@ -1,4 +1,4 @@
-defmodule ExnotifyPort do
+defmodule FSNotify do
   use GenServer
 
   def start_link(opts) do
@@ -23,7 +23,7 @@ defmodule ExnotifyPort do
   def init(opts) do
     opts = Keyword.validate!(opts, [:receiver])
 
-    executable = Path.join(:code.priv_dir(:exnotify_port), "inotify")
+    executable = Path.join(:code.priv_dir(:fsnotify), "fsnotify")
 
     port =
       Port.open({:spawn_executable, executable}, [
