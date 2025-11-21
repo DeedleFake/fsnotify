@@ -10,9 +10,10 @@ defmodule FSNotify do
   @type message() ::
           {:fsnotify_event, path :: String.t(), ops :: MapSet.t(op())}
           | {:fsnotify_error, error_message :: String.t()}
+          | {:fsnotify_stop, t()}
   @type op() :: :create | :write | :remove | :rename | :chmod
 
-  @type start_option() :: {:name, t()} | {:receiver, Process.dest()} | {:watches, [Path.t()]}
+  @type start_option() :: {:name, t()} | {:watches, [Path.t()]}
 
   use GenServer
 
@@ -23,19 +24,14 @@ defmodule FSNotify do
 
   ## Options
 
-    * `:name` - the name to register the GenServer under
-
-    * `:receiver` - the process to send events and errors to (defaults
-      to the calling process; should be present if running under a
-      supervisor)
+    * `:name` - the name to register the GenServer under (required)
 
     * `:watches` - an initial set of watches to add; failure to add
       any of them is considered fatal
   """
   @spec start_link([start_option()]) :: GenServer.on_start()
   def start_link(opts) do
-    {name, opts} = Keyword.pop(opts, :name)
-    opts = Keyword.put_new(opts, :receiver, self())
+    name = Keyword.fetch!(opts, :name)
     GenServer.start_link(__MODULE__, opts, name: name)
   end
 
@@ -73,9 +69,38 @@ defmodule FSNotify do
     GenServer.cast(fsnotify, :stop)
   end
 
+  @doc """
+  Subscribes the current process to events from the given monitor. See
+  `t:message/0` for messages that are sent to subscribers.
+
+  The fsnotify argument must be the name that the monitor was started
+  with, not a PID.
+
+  If the same process subscribes multiple times, it must unsubscribe
+  the same number of times in order to stop receiving events. It will
+  not receive duplicate events, however.
+
+  Note that subscriptions are tracked externally to the monitor,
+  meaning that if the monitor stops and then a new monitor is started
+  with the same name, any processes that were already subscribed to
+  the old monitor will receive events from the new one.
+  """
+  @spec subscribe(t()) :: :ok
+  def subscribe(fsnotify) do
+    :pg.join(FSNotify.Subscribers, fsnotify, [self()])
+  end
+
+  @doc """
+  Unsubscribes the current process from the given monitor.
+  """
+  @spec unsubscribe(t()) :: :ok
+  def unsubscribe(fsnotify) do
+    :pg.leave(FSNotify.Subscribers, fsnotify, [self()])
+  end
+
   @impl true
   def init(opts) do
-    opts = Keyword.validate!(opts, [:receiver, watches: []])
+    opts = Keyword.validate!(opts, [:name, watches: []])
 
     executable = Path.join(:code.priv_dir(:fsnotify), "fsnotify")
 
@@ -88,8 +113,8 @@ defmodule FSNotify do
 
     {:ok,
      %{
-       receiver: Keyword.fetch!(opts, :receiver),
-       port: port
+       port: port,
+       name: Keyword.fetch!(opts, :name)
      }, {:continue, {:add_initial_watches, opts[:watches]}}}
   end
 
@@ -123,12 +148,13 @@ defmodule FSNotify do
   @impl true
   def handle_cast(:stop, state) do
     Port.close(state.port)
+    broadcast(state.name, {:fsnotify_stop, state.name})
     {:stop, {:shutdown, :stopped}, state}
   end
 
   @impl true
   def handle_info({_port, {:data, <<0::8*8, data::binary>>}}, state) do
-    send(state.receiver, data_to_message(JSON.decode!(data)))
+    broadcast(state.name, data_to_message(JSON.decode!(data)))
     {:noreply, state}
   end
 
@@ -142,6 +168,18 @@ defmodule FSNotify do
     after
       1000 -> {:error, :timeout}
     end
+  end
+
+  defp broadcast(name, msg) do
+    subscribers =
+      :pg.get_members(FSNotify.Subscribers, name)
+      |> Stream.uniq()
+
+    for sub <- subscribers do
+      send(sub, msg)
+    end
+
+    :ok
   end
 
   defp data_to_reply("ok"), do: :ok
