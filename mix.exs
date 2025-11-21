@@ -42,7 +42,7 @@ defmodule FSNotify.MixProject do
     [
       links: %{"GitHub" => @github},
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE go.* port),
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE go.* port)
     ]
   end
 

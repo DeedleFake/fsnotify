@@ -75,7 +75,7 @@ defmodule FSNotify do
 
   @impl true
   def init(opts) do
-    opts = Keyword.validate!(opts, [:receiver, :watches])
+    opts = Keyword.validate!(opts, [:receiver, watches: []])
 
     executable = Path.join(:code.priv_dir(:fsnotify), "fsnotify")
 
@@ -94,15 +94,11 @@ defmodule FSNotify do
   end
 
   @impl true
-  def handle_continue({:add_initial_watches, nil}, state) do
-    {:noreply, state}
-  end
-
-  @impl true
   def handle_continue({:add_initial_watches, watches}, state) when is_list(watches) do
     for watch <- watches do
       :ok = send_command(state.port, :add_watch, watch)
     end
+
     {:noreply, state}
   end
 
