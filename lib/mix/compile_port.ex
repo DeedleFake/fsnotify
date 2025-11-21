@@ -3,7 +3,7 @@ defmodule Mix.Tasks.Compile.CompilePort do
 
   use Mix.Task.Compiler
 
-  @go_path System.find_executable("go")
+  @go_path get_in(Mix.Project.config()[:fsnotify][:go_path]) || System.find_executable("go")
   @output_path Path.join(:code.priv_dir(:fsnotify), "fsnotify")
 
   @impl true
