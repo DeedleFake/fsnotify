@@ -7,7 +7,7 @@ defmodule FSNotify.MixProject do
     [
       app: :fsnotify,
       version: "0.2.0",
-      elixir: "~> 1.19",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       compilers: Mix.compilers() ++ [:compile_port],
