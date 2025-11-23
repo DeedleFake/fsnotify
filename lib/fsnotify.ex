@@ -6,7 +6,7 @@ defmodule FSNotify do
 
   ## Options
 
-    * `:name` - the name to register the GenServer under (required)
+    * `:name` - the name of the monitor (required)
 
     * `:watches` - an initial set of watches to add; failure to add
       any of them is considered fatal
@@ -23,7 +23,7 @@ defmodule FSNotify do
           | {:fsnotify_stop, name()}
   @type op() :: :create | :write | :remove | :rename | :chmod
 
-  @type start_option() :: {:name, name()} | {:watches, [Path.name()]}
+  @type start_option() :: {:name, name()} | {:watches, Enumerable.t(Path.t())}
 
   @doc """
   Registers a path to be watched by the monitor.
