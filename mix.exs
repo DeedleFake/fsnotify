@@ -6,7 +6,7 @@ defmodule FSNotify.MixProject do
   def project do
     [
       app: :fsnotify,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -34,7 +34,7 @@ defmodule FSNotify.MixProject do
 
   defp description do
     """
-    Provides cross-platform filesystem event monitoring in the vein of inotify.
+    Port-based cross-platform filesystem watching in the vein of inotify.
     """
   end
 
