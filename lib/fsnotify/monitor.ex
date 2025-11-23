@@ -91,7 +91,6 @@ defmodule FSNotify.Monitor do
       FSNotify.Supervisor.registry_name(name),
       :subscribers,
       fn subscribers ->
-        dbg(subscribers)
         subscribers = Stream.uniq(subscribers)
 
         for {sub, nil} <- subscribers do
