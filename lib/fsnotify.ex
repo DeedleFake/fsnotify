@@ -18,8 +18,8 @@ defmodule FSNotify do
   @type name() :: GenServer.name()
 
   @type message() ::
-          {:fsnotify_event, path :: String.name(), ops :: MapSet.t(op())}
-          | {:fsnotify_error, error_message :: String.name()}
+          {:fsnotify_event, path :: String.t(), ops :: MapSet.t(op())}
+          | {:fsnotify_error, error_message :: String.t()}
           | {:fsnotify_stop, name()}
   @type op() :: :create | :write | :remove | :rename | :chmod
 
@@ -28,7 +28,7 @@ defmodule FSNotify do
   @doc """
   Registers a path to be watched by the monitor.
   """
-  @spec add_watch(name(), Path.name()) :: :ok | {:error, String.name()}
+  @spec add_watch(name(), Path.t()) :: :ok | {:error, String.t()}
   def add_watch(name, path) do
     GenServer.call(name, {:add_watch, path})
   end
@@ -37,7 +37,7 @@ defmodule FSNotify do
   Removes a path that was previously registered to be watched by the
   monitor.
   """
-  @spec remove(name(), Path.name()) :: :ok | {:error, String.name()}
+  @spec remove(name(), Path.t()) :: :ok | {:error, String.t()}
   def remove(name, path) do
     GenServer.call(name, {:remove, path})
   end
@@ -46,7 +46,7 @@ defmodule FSNotify do
   Returns, in no particular order, all paths registered to be watched
   by the monitor.
   """
-  @spec watch_list(name()) :: [path] when path: String.name()
+  @spec watch_list(name()) :: [path] when path: String.t()
   def watch_list(name) do
     GenServer.call(name, :watch_list)
   end
