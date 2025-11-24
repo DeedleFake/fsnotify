@@ -12,6 +12,8 @@ defmodule FSNotify do
       any of them is considered fatal
   """
 
+  import FSNotify.Supervisor, only: [registry_name: 1]
+
   @doc false
   defdelegate child_spec(spec), to: FSNotify.Supervisor
 
@@ -72,7 +74,7 @@ defmodule FSNotify do
   """
   @spec subscribe(name()) :: :ok
   def subscribe(name) do
-    Registry.register(FSNotify.Supervisor.registry_name(name), :subscribers, nil)
+    Registry.register(registry_name(name), :subscribers, nil)
     :ok
   end
 
@@ -81,7 +83,7 @@ defmodule FSNotify do
   """
   @spec unsubscribe(name()) :: :ok
   def unsubscribe(name) do
-    Registry.unregister(FSNotify.Supervisor.registry_name(name), :subscribers)
+    Registry.unregister(registry_name(name), :subscribers)
     :ok
   end
 end

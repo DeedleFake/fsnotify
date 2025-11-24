@@ -3,6 +3,8 @@ defmodule FSNotify.Monitor do
 
   use GenServer
 
+  import FSNotify.Supervisor, only: [registry_name: 1]
+
   @doc """
   Starts a new monitor. A single monitor can watch for events in
   multiple files and directories, so one is generally enough for a lot
@@ -88,7 +90,7 @@ defmodule FSNotify.Monitor do
 
   defp broadcast(name, msg) do
     Registry.dispatch(
-      FSNotify.Supervisor.registry_name(name),
+      registry_name(name),
       :subscribers,
       fn subscribers ->
         subscribers = Stream.uniq(subscribers)
