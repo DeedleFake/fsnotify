@@ -1,7 +1,7 @@
 defmodule FSNotify.Supervisor do
   @moduledoc false
 
-  use Supervisor
+  use Supervisor, restart: :transient
 
   def start_link(opts) do
     Supervisor.start_link(__MODULE__, opts)
@@ -16,7 +16,7 @@ defmodule FSNotify.Supervisor do
       {FSNotify.Monitor, opts}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_one, auto_shutdown: :all_significant)
   end
 
   def registry_name(name) do

@@ -1,7 +1,7 @@
 defmodule FSNotify.Monitor do
   @moduledoc false
 
-  use GenServer
+  use GenServer, restart: :transient, significant: true
 
   import FSNotify.Supervisor, only: [registry_name: 1]
 
